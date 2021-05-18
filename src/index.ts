@@ -8,8 +8,8 @@ import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 import Redis from "ioredis";
-import session from "express-session";
 import connectRedis from "connect-redis";
+import session from "express-session";
 import cors from "cors";
 import { createConnection } from "typeorm";
 import { Post } from "./entities/Post";
@@ -22,7 +22,7 @@ const init = async () => {
   // how we wanna config the typeOrm connection
   // rerundf
 
-  await createConnection({
+  const conn = await createConnection({
     type: "postgres",
     // database: "lireddit",
     // username: "postgres",
@@ -30,13 +30,13 @@ const init = async () => {
     url: process.env.DATABASE_URL,
     logging: true,
     entities: [Post, User, Updoot],
-    migrations: [path.join(__dirname, "./migrations/*")],
+    // migrations: [path.join(__dirname, "./migrations/*")],
     // synchronize => automatically updats table so you don't need to make migrations
-    // synchronize: true,
+    synchronize: true,
   });
 
+  await conn.runMigrations();
   // Post.delete({});
-  // await conn.runMigrations();
 
   // connecting to the db
   // const orm = await MikroORM.init(mikro_config);
@@ -74,7 +74,7 @@ const init = async () => {
 
   // telling that we have 1 proxy sitting in front
   // so cookies and sessions could work
-  app.set("proxy", 1);
+  app.set("trust proxy", 1);
   // 순서가 중요하다 -> 써 있는 순서대로 작동되기 때문에
   // express init -> store data -> apollo uses the data
   app.use(
@@ -102,7 +102,7 @@ const init = async () => {
         sameSite: "lax", //csrf
         httpOnly: true,
         secure: __prod__, // cookie only works in https, not even in localhost
-        domain: __prod__ ? "" : undefined,
+        domain: __prod__ ? ".dailykoding.xyz" : undefined,
       },
       // would you like to keep pinging redis?
       resave: false,
@@ -132,7 +132,7 @@ const init = async () => {
 
   // start the server
   app.listen(parseInt(process.env.PORT), () => {
-    console.log("server started on localhost:4000");
+    console.log("server started on http://localhost:4000");
   });
 };
 
